@@ -1,0 +1,34 @@
+import pandas as pd
+from pandas import DataFrame, read_csv
+import numpy as np
+from sklearn import svm
+from sklearn import cross_validation
+from sklearn import datasets
+from sklearn import metrics
+from sklearn.grid_search import GridSearchCV
+train = pd.read_csv('train.csv')
+test = pd.read_csv('test.csv')
+features = train.columns[1:94]
+features
+y, _ = pd.factorize(train['target'])
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                     'C': [1, 10, 100, 1000]},
+                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]},
+                    {'kernel': ['poly'], 'degree':[3,5,7,11,21], 'gamma': [1e-3, 1e-4], 'coef0' :[0.0, 0.2,0.5,0.8,1.0,3.0], 
+                     'C': [1, 10, 100, 1000]}]
+clf = GridSearchCV(svm.SVC(C=1), tuned_parameters, cv=5)
+clf.fit(train[features], y)
+
+print("Best parameters set found on development set:")
+print()
+print(clf.best_params_)
+print()
+print("Grid scores on development set:")
+print()
+for params, mean_score, scores in clf.grid_scores_:
+    print("%0.3f (+/-%0.03f) for %r"
+              % (mean_score, scores.std() * 2, params))
+preds = clf.predict(test[features])
+preds
+preds.astype(int)
+np.savetxt("preds.csv", preds)
