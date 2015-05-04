@@ -5,7 +5,7 @@ from sklearn import tree
 from sklearn import cross_validation
 from sklearn import datasets
 from sklearn import metrics
-from sklearn.grid_search import GridSearchCV
+
 train = pd.read_csv('train.csv')
 test = pd.read_csv('test.csv')
 features = train.columns[1:94]
@@ -13,6 +13,11 @@ features
 y, _ = pd.factorize(train['target'])
 clf = tree.DecisionTreeClassifier()
 clf.fit(train[features], y)
+#Once trained, we can export the tree in Graphviz format using the export_graphviz exporter. 
+dot_data = StringIO() 
+tree.export_graphviz(clf, out_file=dot_data) 
+graph = pydot.graph_from_dot_data(dot_data.getvalue()) 
+graph.write_pdf("iris.pdf") 
 
 preds = clf.predict(test[features])
 preds
