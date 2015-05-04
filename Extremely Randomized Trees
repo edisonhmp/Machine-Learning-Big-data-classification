@@ -1,11 +1,21 @@
-from sklearn.cross_validation import cross_val_score
-from sklearn.datasets import make_blobs
+import pandas as pd
+from pandas import DataFrame, read_csv
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.tree import DecisionTreeClassifier
-
-
-
+from sklearn import cross_validation
+from sklearn.cross_validation import cross_val_score
+from sklearn import datasets
+from sklearn import metrics
+from sklearn.grid_search import GridSearchCV
+train = pd.read_csv('train.csv')
+test = pd.read_csv('test.csv')
+features = train.columns[1:94]
+features
+y, _ = pd.factorize(train['target'])
+'''
+#easier way to compare tree models
 clf = DecisionTreeClassifier(max_depth=None, min_samples_split=1,random_state=0)
 scores = cross_val_score(clf, X, y)
 scores.mean()                             
@@ -18,3 +28,51 @@ scores.mean()
 clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,min_samples_split=1, random_state=0)
 scores = cross_val_score(clf, X, y)
 scores.mean() > 0.999
+'''
+tuned_parameters = [{'n_estimators': range(10,100), 'min_samples_split': range(1,100),
+                     'random_state': range(0,10)}]
+clf = GridSearchCV(ExtraTreesClassifier(), tuned_parameters, cv=5)
+clf.fit(train[features], y)
+
+print("Best parameters set found on development set:")
+print()
+print(clf.best_params_)
+print()
+print("Grid scores on development set:")
+print()
+for params, mean_score, scores in clf.grid_scores_:
+    print("%0.3f (+/-%0.03f) for %r"
+              % (mean_score, scores.std() * 2, params))
+preds = clf.predict(test[features])
+preds
+preds.astype(int)
+np.savetxt("preds.csv", preds)
+
+''' 
+# Build a forest and compute the feature importances
+clf = ExtraTreesClassifier(n_estimators=10,min_samples_split=1,random_state=0)
+clf.fit(train[features], y)
+importances = clf.feature_importances_
+std = np.std([tree.feature_importances_ for tree in clf.estimators_],
+             axis=0)
+indices = np.argsort(importances)[::-1]
+x = indices[:10]
+# Print the feature ranking
+print("Feature ranking:")
+
+for f in range(10):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
+# Plot the top 10 feature importances of the forest
+plt.figure()
+plt.title("Feature importances")
+plt.bar(range(10), importances[x],
+       color="r", yerr=std[x], align="center")
+plt.xticks(range(10), indices)
+plt.xlim([-1, 10])
+plt.show()
+'''
+
+
+
+
